@@ -4,9 +4,7 @@
     // 第一部分：创建并设置 Canvas 背景 (交互模式)
     // ---------------------------------------------------------------
     const canvas = document.createElement('canvas');
-    canvas.id = 'fluid-background'; // 给 canvas 一个 id
-
-    // 设置 canvas 的样式，使其成为一个固定的背景
+    canvas.id = 'fluid-background';
     canvas.style.cssText = `
         position: fixed;
         top: 0;
@@ -15,14 +13,11 @@
         height: 100%;
         z-index: -1; 
     `;
-
-    // 将 canvas 添加到页面的最前面，这样它就会在 DOM 结构的最底层
     document.body.insertBefore(canvas, document.body.firstChild);
 
     // ---------------------------------------------------------------
     // 第二部分：完整的“流体模拟”核心代码
     // ---------------------------------------------------------------
-
     'use strict';
     console.log(
         `%c WEBGLHOME %c WisheMeLzzz `,
@@ -174,71 +169,7 @@
     }
 
     function isMobile() {
-        return false
-    }
-
-    function captureScreenshot() {
-        var res = getResolution(config.CAPTURE_RESOLUTION);
-        var target = createFBO(res.width, res.height, ext.formatRGBA.internalFormat, ext.formatRGBA.format, ext.halfFloatTexType, gl.NEAREST);
-        render(target);
-
-        var texture = framebufferToTexture(target);
-        texture = normalizeTexture(texture, target.width, target.height);
-
-        var captureCanvas = textureToCanvas(texture, target.width, target.height);
-        var datauri = captureCanvas.toDataURL();
-        downloadURI('fluid.png', datauri);
-        URL.revokeObjectURL(datauri);
-    }
-
-    function framebufferToTexture(target) {
-        gl.bindFramebuffer(gl.FRAMEBUFFER, target.fbo);
-        var length = target.width * target.height * 4;
-        var texture = new Float32Array(length);
-        gl.readPixels(0, 0, target.width, target.height, gl.RGBA, gl.FLOAT, texture);
-        return texture;
-    }
-
-    function normalizeTexture(texture, width, height) {
-        var result = new Uint8Array(texture.length);
-        var id = 0;
-        for (var i = height - 1; i >= 0; i--) {
-            for (var j = 0; j < width; j++) {
-                var nid = i * width * 4 + j * 4;
-                result[nid + 0] = clamp01(texture[id + 0]) * 255;
-                result[nid + 1] = clamp01(texture[id + 1]) * 255;
-                result[nid + 2] = clamp01(texture[id + 2]) * 255;
-                result[nid + 3] = clamp01(texture[id + 3]) * 255;
-                id += 4;
-            }
-        }
-        return result;
-    }
-
-    function clamp01(input) {
-        return Math.min(Math.max(input, 0), 1);
-    }
-
-    function textureToCanvas(texture, width, height) {
-        var captureCanvas = document.createElement('canvas');
-        var ctx = captureCanvas.getContext('2d');
-        captureCanvas.width = width;
-        captureCanvas.height = height;
-
-        var imageData = ctx.createImageData(width, height);
-        imageData.data.set(texture);
-        ctx.putImageData(imageData, 0, 0);
-
-        return captureCanvas;
-    }
-
-    function downloadURI(filename, uri) {
-        var link = document.createElement('a');
-        link.download = filename;
-        link.href = uri;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        return false;
     }
 
     var Material = function Material(vertexShader, fragmentShaderSource) {
@@ -402,7 +333,7 @@
     var sunraysProgram = new Program(baseVertexShader, sunraysShader);
     var splatProgram = new Program(baseVertexShader, splatShader);
     var advectionProgram = new Program(baseVertexShader, advectionShader);
-    var divergenceProgram = new Program(baseVertexShader, divergenceProgram);
+    var divergenceProgram = new Program(baseVertexShader, divergenceShader);
     var curlProgram = new Program(baseVertexShader, curlShader);
     var vorticityProgram = new Program(baseVertexShader, vorticityShader);
     var pressureProgram = new Program(baseVertexShader, pressureShader);
@@ -937,24 +868,12 @@
         t = v * (1 - (1 - f) * s);
 
         switch (i % 6) {
-            case 0:
-                r = v, g = t, b = p;
-                break;
-            case 1:
-                r = q, g = v, b = p;
-                break;
-            case 2:
-                r = p, g = v, b = t;
-                break;
-            case 3:
-                r = p, g = q, b = v;
-                break;
-            case 4:
-                r = t, g = p, b = v;
-                break;
-            case 5:
-                r = v, g = p, b = q;
-                break;
+            case 0: r = v, g = t, b = p; break;
+            case 1: r = q, g = v, b = p; break;
+            case 2: r = p, g = v, b = t; break;
+            case 3: r = p, g = q, b = v; break;
+            case 4: r = t, g = p, b = v; break;
+            case 5: r = v, g = p, b = q; break;
         }
 
         return {
